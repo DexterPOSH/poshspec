@@ -12,35 +12,30 @@
 .PARAMETER Should 
     A Script Block defining a Pester Assertion.  
 .EXAMPLE
-    TcpPort localhost 80 PingSucceeded  { Should Be $true }
+    TcpPort @{ComputerName=localhost;Port=80} PingSucceeded  { Should Be $true }
 .EXAMPLE
-    TcpPort localhost 80 TcpTestSucceeded { Should Be $true }
+    TcpPort @{ComputerName=localhost;Port=80} TcpTestSucceeded { Should Be $true }
 .NOTES
     Assertions: Be, BeExactly, Match, MatchExactly
 #>
-    function TcpPort {
+function TcpPort {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, Position=1)]
-        [Alias("ComputerName")]
-        [string]$Target,
-
-        [Parameter(Mandatory, Position=2)]
-        [Alias("Port")]
-        [string]$Qualifier,
+        [HashTable]$TargetHash,
       
-        [Parameter(Mandatory, Position=3)]
+        [Parameter(Mandatory, Position=2)]
         [ValidateSet("AllNameResolutionResults", "BasicNameResolution", "ComputerName", "Detailed", "DNSOnlyRecords", "InterfaceAlias", 
             "InterfaceDescription", "InterfaceIndex", "IsAdmin", "LLMNRNetbiosRecords", "MatchingIPsecRules", "NameResolutionSucceeded", 
             "NetAdapter", "NetRoute", "NetworkIsolationContext", "PingReplyDetails", "PingSucceeded", "RemoteAddress", "RemotePort", 
             "SourceAddress", "TcpClientSocket", "TcpTestSucceeded", "TraceRoute")]
-        [string]$Property,        
+        [string]$Property,   
         
-        [Parameter(Mandatory, Position=4)]
+        [Parameter(Mandatory, Position=3)]
         [scriptblock]$Should
     )
 
-    $params = Get-PoshspecParam -TestName TcpPort -TestExpression {Test-NetConnection -ComputerName $Target -Port $Qualifier -ErrorAction SilentlyContinue} @PSBoundParameters
+    $params = Get-PoshspecParam -TestName TcpPort -TestExpression {Test-NetConnection @TargetHash  -ErrorAction SilentlyContinue} @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }

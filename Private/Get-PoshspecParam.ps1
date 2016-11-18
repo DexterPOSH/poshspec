@@ -8,8 +8,8 @@ function Get-PoshspecParam {
         [string]
         $TestExpression,        
         [Parameter(Mandatory)]
-        [string]
-        $Target,        
+        [HashTable]
+        $TargetHash,        
         [Parameter()]
         [string]
         $FriendlyName,            
@@ -28,7 +28,15 @@ function Get-PoshspecParam {
 
     if (-not $PSBoundParameters.ContainsKey("FriendlyName"))
     {
-        $FriendlyName = $Target
+        $FriendlyName = $TargetHash.GetEnumerator() |
+                            ForEach-Object -Begin {
+                                $outString = ""
+                            } -Process {
+                                $outString = $outString + ( "{0} -> {1} ;" -f $PSItem.Key, $PSItem.Value)
+                            } -End {
+                                $outString
+                            }
+
     }
  
     $expressionString = $TestExpression.ToString().Trim()

@@ -19,7 +19,7 @@ function Service {
     param( 
         [Parameter(Mandatory, Position=1)]
         [Alias("Name")]
-        [string]$Target,
+        [Hashtable]$TargetHash,
 
         [Parameter(Position=2, ParameterSetName='prop')]
         [string]$Property = 'Status',
@@ -28,13 +28,13 @@ function Service {
         [Parameter(Mandatory, Position=3, ParameterSetName='prop')]
         [scriptblock]$Should
     )
-
-    if (-not $PSBoundParameters.ContainsKey('Property')) {
-        $Property = 'Status'
+    #$PSBoundParameters.Remove('Should')
+    $ClosureShould = $Should.GetNewClosure()
+    #$newShould = [ScriptBlock]::Create($($ExecutionContext.InvokeCommand.ExpandString("$ClosureShould")))
         $PSBoundParameters.Add('Property', $Property)
     }
 
-    $params = Get-PoshspecParam -TestName Service -TestExpression {Get-Service -Name '$Target'} @PSBoundParameters
+    $params = Get-PoshspecParam -TestName Service -TestExpression {Get-Service @TargetHash} @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }

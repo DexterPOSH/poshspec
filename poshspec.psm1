@@ -1,6 +1,12 @@
 try 
 {
-    Import-Module Pester
+    if (Get-Module -name Pester) {
+        # module is already loaded
+    }
+    else {
+        Import-Module Pester
+    }
+    
 }
 catch [Exception]
 {

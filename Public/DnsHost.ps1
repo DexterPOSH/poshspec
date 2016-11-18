@@ -8,9 +8,9 @@
 .PARAMETER Should 
     A Script Block defining a Pester Assertion.  
 .EXAMPLE           
-    dnshost nonexistenthost.mymadeupdomain.tld { should be $null }        
+    dnshost @{Name=nonexistenthost.mymadeupdomain.tl;Server='2.2.2.2'}   { should be $null }        
 .EXAMPLE
-    dnshost www.google.com { should not be $null }
+    dnshost  @{Name='google.com'} Name { should not be 'google.com' }
 .NOTES
     Assertions: be
 #>
@@ -19,14 +19,13 @@ function DnsHost {
     param(
         [Parameter(Mandatory, Position=1)]
         [Alias('Name')]
-        [string]$Target,
+        [HashTable]$TargetHash,
         
-        [Parameter(Mandatory, Position=2)]
+        
+        [Parameter(Mandatory, Position=2, ParameterSetName='Default')]
         [scriptblock]$Should
     )
-  
-    $expression = {Resolve-DnsName -Name $Target -DnsOnly -NoHostsFile -ErrorAction SilentlyContinue}
-    
+    $expression = {Resolve-DnsName @TargetHash -DnsOnly -NoHostsFile -ErrorAction SilentlyContinue}
     $params = Get-PoshspecParam -TestName DnsHost -TestExpression $expression @PSBoundParameters
     
     Invoke-PoshspecExpression @params

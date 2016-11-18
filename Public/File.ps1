@@ -19,14 +19,13 @@
     param(
         [Parameter(Mandatory, Position=1)]
         [Alias("Path")]
-        [string]$Target,
+        [HashTable]$TargetHash,
         
         [Parameter(Mandatory, Position=2)]
         [scriptblock]$Should
     )
  
-    $name = Split-Path -Path $Target -Leaf
-    $params = Get-PoshspecParam -TestName File -TestExpression {'$Target'} -FriendlyName $name @PSBoundParameters
+    $params = Get-PoshspecParam -TestName File -TestExpression {Test-Path -PathType Leaf @TargetHash}  @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }

@@ -1,8 +1,8 @@
  <#
 .SYNOPSIS
-    Test a local network interface.
+    Test an IP address assigned on a local network IPv4Address.
 .DESCRIPTION
-    Test a local network interface and optionally and specific property.
+    Test a local network IPv4Address and optionally and specific property.
 .PARAMETER Target
     Specifies the name of the network adapter to search for.
 .PARAMETER Property
@@ -10,22 +10,22 @@
 .PARAMETER Should 
     A Script Block defining a Pester Assertion.
 .EXAMPLE
-    interface ethernet0 { should not BeNullOrEmpty }
+    IPv4Address ethernet0 { should not BeNullOrEmpty }
 .EXAMPLE
-    interface ethernet0 status { should be 'up' }
+    IPv4Address ethernet0 Type { should be 'unicast' }
 .EXAMPLE
-    Interface Ethernet0 linkspeed { should be '1 gbps' } 
+    IPv4Address Ethernet0 AddressSpeed { should be 'Preferred' } 
 .EXAMPLE
-    Interface Ethernet0 macaddress { should be '00-0C-29-F2-69-DD' }
+    IPv4Address Ethernet0 IPAddress { should be '192.168.1.1' }
 .NOTES
     Assertions: Be, BeNullOrEmpty
 #>
-function Interface {
+function IPv4Address {
     [CmdletBinding(DefaultParameterSetName="Default")]
     param(
         [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
         [Parameter(Mandatory, Position=1,ParameterSetName="Property")]
-        [HashTable]$TargetHash,
+        [HashTable]$Target,
         
         [Parameter(Position=2,ParameterSetName="Property")]
         [string]$Property,
@@ -35,9 +35,9 @@ function Interface {
         [scriptblock]$Should
     )
    
-    $expression = {Get-NetAdapter -Name '$Target' -ErrorAction SilentlyContinue}
+    $expression = {Get-NetIPAddress -AddressFamily 'Ipv4' @Target -ErrorAction SilentlyContinue}
 
-    $params = Get-PoshspecParam -TestName Interface -TestExpression $expression @PSBoundParameters
+    $params = Get-PoshspecParam -TestName IPv4Address -TestExpression $expression @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }

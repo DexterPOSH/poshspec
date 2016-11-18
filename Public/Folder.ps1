@@ -19,14 +19,14 @@ function Folder {
     param(
         [Parameter(Mandatory, Position=1)]
         [Alias('Path')]
-        [string]$Target,
+        [HashTable]$TargetHash,
         
         [Parameter(Mandatory, Position=2)]
         [scriptblock]$Should
     )
     
 
-    $params = Get-PoshspecParam -TestName Folder -TestExpression {'$Target'} @PSBoundParameters
+    $params = Get-PoshspecParam -TestName Folder -TestExpression {Test-Path -PathType Container @TargetHash} @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }
