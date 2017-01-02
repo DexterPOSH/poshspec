@@ -25,7 +25,7 @@ function TcpPortWithSourceAddress {
         [scriptblock]$Should
     )
 
-    Switch -Exact (Get-TargetType) {
+    Switch -Exact (Get-TargetType -Target $Target) {
         'String' {
             Write-Error -Message "TcpPortWithSourceAddress - requires a hashtable input with ComputerName, Port and SourceIP"
             break;
