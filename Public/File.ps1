@@ -17,15 +17,26 @@
   function File {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, Position=1)]
+        [Parameter(Mandatory, Position=0)]
         [Alias("Path")]
-        [HashTable]$TargetHash,
+        [Object]$Target,
         
-        [Parameter(Mandatory, Position=2)]
+        [Parameter(Mandatory, Position=1)]
         [scriptblock]$Should
     )
- 
-    $params = Get-PoshspecParam -TestName File -TestExpression {Test-Path -PathType Leaf @TargetHash}  @PSBoundParameters
+        Switch -Exact (Get-TargetType -Target $Target) {
+            'String' {
+                $expression = {'$Target'};
+                break;
+            }
+            'Hashtable' {
+                #$expression =  {Test-Path -PathType Leaf @Target};
+                Write-Error -Message "File - requires a single input. Path of the file to be tested."
+                break;
+            }
+        }
+    
+    $params = Get-PoshspecParam -TestName File -TestExpression $expression  @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }

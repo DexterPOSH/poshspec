@@ -1,10 +1,10 @@
  <#
 .SYNOPSIS
-    Test an IP address assigned on a local network IPv4Address.
+    Test an IP address assigned on a network interface.
 .DESCRIPTION
-    Test a local network IPv4Address and optionally and specific property.
+    Test IPv4Address and optionally any specific property on the MSFT_NetIPAddress CIM class object.
 .PARAMETER Target
-    Specifies the name of the network adapter to search for.
+    Specifies the interface alias of the network adapter to search for.
 .PARAMETER Property
     Specifies an optional property to test for on the adapter. 
 .PARAMETER Should 
@@ -23,19 +23,36 @@
 function IPv4Address {
     [CmdletBinding(DefaultParameterSetName="Default")]
     param(
-        [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
-        [Parameter(Mandatory, Position=1,ParameterSetName="Property")]
-        [HashTable]$Target,
+        [Parameter(Mandatory, Position=0,ParameterSetName="Default")]
+        [Parameter(Mandatory, Position=0,ParameterSetName="Property")]
+        [Object]$Target,
         
-        [Parameter(Position=2,ParameterSetName="Property")]
+        [Parameter(Position=1,ParameterSetName="Property")]
+        [ValidateSet('ifIndex','Address','AddressOrigin','AddressType','AvailableRequestedStates','Caption','CommunicationStatus',
+        'CreationClassName','Description','DetailedStatus','ElementName','EnabledDefault','EnabledState','HealthState','InstallDate',
+        'InstanceID','InterfaceAlias','InterfaceIndex','IPAddress','IPv4Address','IPv6Address','IPVersionSupport','Name','NameFormat',
+        'OperatingStatus','OperationalStatus','OtherEnabledState','OtherTypeDescription','PreferredLifetime','PrefixLength','PrimaryStatus',
+        'ProtocolIFType','ProtocolType','PSComputerName','RequestedState','SkipAsSource','Status','StatusDescriptions','SubnetMask',
+        'SystemCreationClassName','SystemName','TimeOfLastStateChange','TransitioningToState','ValidLifetime','AddressFamily','AddressState',
+        'PrefixOrigin','Store','SuffixOrigin','Type')]
         [string]$Property,
         
-        [Parameter(Mandatory, Position=2,ParameterSetName="Default")]
-        [Parameter(Mandatory, Position=3,ParameterSetName="Property")]
+        [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
+        [Parameter(Mandatory, Position=2,ParameterSetName="Property")]
         [scriptblock]$Should
     )
-   
-    $expression = {Get-NetIPAddress -AddressFamily 'Ipv4' @Target -ErrorAction SilentlyContinue}
+    Switch -Exact (Get-TargetType -Target $Target) {
+        'String' {
+            $expression = {Get-NetIPAddress -AddressFamily 'Ipv4' -InterfaceAlias $Target -ErrorAction SilentlyContinue};
+            break;
+        }
+        'Hashtable' {
+            $expression = {Get-NetIPAddress -AddressFamily 'Ipv4' @Target -ErrorAction SilentlyContinue};
+            break;
+        }
+    }
+    
+    #$expression = {Get-NetIPAddress -AddressFamily 'Ipv4' @Target -ErrorAction SilentlyContinue}
 
     $params = Get-PoshspecParam -TestName IPv4Address -TestExpression $expression @PSBoundParameters
     

@@ -10,30 +10,46 @@
 .PARAMETER Should 
     A Script Block defining a Pester Assertion.
 .EXAMPLE
-    VMNetworkAdapter @{VMName='TestVM'} { should not BeNullOrEmpty }
+    Usage with passing VM name only
+    VMNetworkAdapter 'TestVM' { should not BeNullOrEmpty }
+.EXAMPLE
+    Usage with passing VM name only, it assumes the VM only has one network adapter 
+    VMNetworkAdapterVLAN 'TestVM' SwitchName { should be 'Untagged' }
+.EXAMPLE
+    VMNetworkAdapter @{VMName='TestVM';Name='Management'} { should not BeNullOrEmpty }
 .EXAMPLE
     VMNetworkAdapter @{VMName='TestVM'} SwitchName { should be 'External' }
 .EXAMPLE
-    VMNetworkAdapter @{VMName='TestVM'} Name { should be 'Management' } 
+    VMNetworkAdapter @{VMName='TestVM'} Name { should be 'Management' }
+.EXAMPLE
+    VMNetworkAdapter @{Name='Management';ManagmentOS=$True}  { should NOT BeNullOrEmpty} 
 .NOTES
     Assertions: Be, BeNullOrEmpty
 #>
 function VMNetworkAdapter {
     [CmdletBinding(DefaultParameterSetName="Default")]
     param(
-        [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
-        [Parameter(Mandatory, Position=1,ParameterSetName="Property")]
-        [HashTable]$TargetHash,
+        [Parameter(Mandatory, Position=0,ParameterSetName="Default")]
+        [Parameter(Mandatory, Position=0,ParameterSetName="Property")]
+        [Object]$Target,
         
-        [Parameter(Position=2,ParameterSetName="Property")]
+        [Parameter(Position=1,ParameterSetName="Property")]
         [string]$Property,
         
-        [Parameter(Mandatory, Position=2,ParameterSetName="Default")]
-        [Parameter(Mandatory, Position=3,ParameterSetName="Property")]
+        [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
+        [Parameter(Mandatory, Position=2,ParameterSetName="Property")]
         [scriptblock]$Should
     )
-    $null = $PSBoundParameters.Remove('Should')
-    $PSbounParameters.Add('Should',[scriptblock]::Create($(& $should)))
+    Switch -Exact (Get-TargetType -Target $Target) {
+        'String' {
+            $expression = {Get-VMNetworkAdapter -VMName $Target -ErrorAction SilentlyContinue};
+            break;
+        }
+        'Hashtable' {
+            $expression = {Get-VMNetworkAdapter @Target -ErrorAction SilentlyContinue};
+            break;
+        }
+    }
     $expression = {Get-VMNetworkAdapter @targetHash  -ErrorAction SilentlyContinue}
     $params = Get-PoshspecParam -TestName VMNetworkAdapter -TestExpression $expression @PSBoundParameters
     

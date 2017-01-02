@@ -8,24 +8,38 @@
 .PARAMETER Should 
     A Script Block defining a Pester Assertion.  
 .EXAMPLE           
-    dnshost @{Name=nonexistenthost.mymadeupdomain.tl;Server='2.2.2.2'}   { should be $null }        
+    dnshost @{Name='nonexistenthost.mymadeupdomain.tl';Server='2.2.2.2'}   { should be $null }        
 .EXAMPLE
-    dnshost  @{Name='google.com'} Name { should not be 'google.com' }
+     dnshost @{Name='google.com';Server='192.168.1.1'} Name {Should BeLike  '*Google.com'}
 .NOTES
     Assertions: be
 #>
 function DnsHost {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName="Default")]
     param(
-        [Parameter(Mandatory, Position=1)]
+        [Parameter(Mandatory, Position=0)]
         [Alias('Name')]
-        [HashTable]$TargetHash,
+        [Object]$Target,
         
-        
-        [Parameter(Mandatory, Position=2, ParameterSetName='Default')]
+        [Parameter(Position=1, ParameterSetName='prop')]
+        [string]$Property,
+
+        [Parameter(Mandatory, Position=1, ParameterSetName='Default')]
+        [Parameter(Mandatory, Position=2, ParameterSetName='prop')]
         [scriptblock]$Should
     )
-    $expression = {Resolve-DnsName @TargetHash -DnsOnly -NoHostsFile -ErrorAction SilentlyContinue}
+
+    Switch -Exact (Get-TargetType -Target $Target) {
+        'String' {
+            $expression = {Resolve-DnsName -Name $Target -DnsOnly -NoHostsFile -ErrorAction SilentlyContinue};
+            break;
+        }
+        'Hashtable' {
+            $expression = {Resolve-DnsName @Target -DnsOnly -NoHostsFile -ErrorAction SilentlyContinue};
+            break
+        }
+    }
+    
     $params = Get-PoshspecParam -TestName DnsHost -TestExpression $expression @PSBoundParameters
     
     Invoke-PoshspecExpression @params

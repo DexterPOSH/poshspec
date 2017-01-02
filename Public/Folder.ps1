@@ -17,16 +17,27 @@
 function Folder {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, Position=1)]
+        [Parameter(Mandatory, Position=0)]
         [Alias('Path')]
-        [HashTable]$TargetHash,
+        [Object]$Target,
         
-        [Parameter(Mandatory, Position=2)]
+        [Parameter(Mandatory, Position=1)]
         [scriptblock]$Should
     )
     
+    Switch -Exact (Get-TargetType -Target $Target) {
+        'String' {
+            $expression = {'$Target'};
+            break;
+        }
+        'Hashtable' {
+            Write-Error -Message "Folder - requires a single input. Path of the Folder to be tested."
+            break
+        }
+    }
+    
+    $params = Get-PoshspecParam -TestName File -TestExpression $expression  @PSBoundParameters
 
-    $params = Get-PoshspecParam -TestName Folder -TestExpression {Test-Path -PathType Container @TargetHash} @PSBoundParameters
     
     Invoke-PoshspecExpression @params
 }

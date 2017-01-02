@@ -10,6 +10,13 @@
 .PARAMETER Should 
     A Script Block defining a Pester Assertion.
 .EXAMPLE
+    Usage with passing VM name only
+    VMNetworkAdapterVLAN 'TestVM' { should not BeNullOrEmpty }
+.EXAMPLE
+    Usage with passing VM name only, it assumes the VM only has one network adapter 
+    VMNetworkAdapterVLAN 'TestVM' Mode { should be 'Untagged' }
+.EXAMPLE
+    Specify the VMName and the network adapter name explicitly using the hashtable format for input
     VMNetworkAdapterVLAN @{VMName='TestVM';VMNetworkAdapterName='Management'} { should not BeNullOrEmpty }
 .EXAMPLE
     VMNetworkAdapterVLAN @{VMName='TestVM';VMNetworkAdapterName='Management'} Mode { should be 'Untagged' }
@@ -21,18 +28,27 @@
 function VMNetworkAdapterVLAN {
     [CmdletBinding(DefaultParameterSetName="Default")]
     param(
-        [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
-        [Parameter(Mandatory, Position=1,ParameterSetName="Property")]
-        [HashTable]$Target,
+        [Parameter(Mandatory, Position=0,ParameterSetName="Default")]
+        [Parameter(Mandatory, Position=0,ParameterSetName="Property")]
+        [Object]$Target,
         
-        [Parameter(Position=2,ParameterSetName="Property")]
+        [Parameter(Position=1,ParameterSetName="Property")]
         [string]$Property,
         
-        [Parameter(Mandatory, Position=2,ParameterSetName="Default")]
-        [Parameter(Mandatory, Position=3,ParameterSetName="Property")]
+        [Parameter(Mandatory, Position=1,ParameterSetName="Default")]
+        [Parameter(Mandatory, Position=2,ParameterSetName="Property")]
         [scriptblock]$Should
     )
-    $expression = {Get-VMNetworkAdapterVLAN @target  -ErrorAction SilentlyContinue}
+    Switch -Exact (Get-TargetType -Target $Target) {
+        'String' {
+            $expression = {Get-VMNetworkAdapterVLAN -VMName $Target -ErrorAction SilentlyContinue};
+            break;
+        }
+        'Hashtable' {
+            $expression = {Get-VMNetworkAdapter @Target -ErrorAction SilentlyContinue};
+            break;
+        }
+    }
     $params = Get-PoshspecParam -TestName VMNetworkAdapterVLAN -TestExpression $expression @PSBoundParameters
     
     Invoke-PoshspecExpression @params

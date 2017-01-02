@@ -8,8 +8,8 @@ function Get-PoshspecParam {
         [string]
         $TestExpression,        
         [Parameter(Mandatory)]
-        [HashTable]
-        $TargetHash,        
+        [Object]
+        $Target,        
         [Parameter()]
         [string]
         $FriendlyName,            
@@ -28,14 +28,18 @@ function Get-PoshspecParam {
 
     if (-not $PSBoundParameters.ContainsKey("FriendlyName"))
     {
-        $FriendlyName = $TargetHash.GetEnumerator() |
-                            ForEach-Object -Begin {
-                                $outString = ""
-                            } -Process {
-                                $outString = $outString + ( "{0} -> {1} ;" -f $PSItem.Key, $PSItem.Value)
-                            } -End {
-                                $outString
-                            }
+        Switch -Exact (Get-TargetType -Target $Target) {
+            'String' {
+                $FriendlyName = $Target;
+                break;
+            }
+            'Hashtable' {
+                $FriendlyName = $Target.GetEnumerator() | ForEach-Object -Begin {  $outString = "" } -Process {
+                                    $outString = $outString + ( "{0} -> {1} ;" -f $PSItem.Key, $PSItem.Value)
+                                }  -End { $outString}
+                break;
+            }
+        }
 
     }
  
