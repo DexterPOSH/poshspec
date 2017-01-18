@@ -22,7 +22,7 @@ function CimObject {
     param(              
         [Parameter(Mandatory, Position=1)]
         [Alias("ClassName")]
-        [string]$Target,
+        [Object]$Target,
          
         [Parameter(Mandatory, Position=2)]
         [string]$Property,
@@ -33,23 +33,33 @@ function CimObject {
     
 
     $expression = "Get-CimInstance"   
+    Switch -Exact (Get-TargetType -Target $Target) {
+        'String' {
+            if ($Target -match '/')
+            {
+                $lastIndexOfSlash = $Target.LastIndexOf('/')
 
-    if ($Target -match '/')
-    {
-        $lastIndexOfSlash = $Target.LastIndexOf('/')
+                $class = $Target.Substring($lastIndexOfSlash + 1)
+                $namespace = $Target.Substring(0,$lastIndexOfSlash)
 
-        $class = $Target.Substring($lastIndexOfSlash + 1)
-        $namespace = $Target.Substring(0,$lastIndexOfSlash)
-
-        $PSBoundParameters["Target"] = $class
-        $PSBoundParameters.Add("Qualifier", $namespace)
-        
-        $expression = {Get-CimInstance -ClassName $Target -Namespace $Qualifier}
+                $PSBoundParameters["Target"] = $class
+                $PSBoundParameters.Add("Qualifier", $namespace)
+                
+                $expression = {Get-CimInstance -ClassName $Target -Namespace $Qualifier}
+            }
+            else 
+            {
+                $expression = {Get-CimInstance -ClassName $Target}
+            }
+            break;
+        }
+        'Hashtable' {
+            $expression = {Get-CimInstance @Target -ErrorAction SilentlyContinue};
+            break;
+        }
     }
-    else 
-    {
-        $expression = {Get-CimInstance -ClassName $Target}
-    }
+    
+    
         
     $params = Get-PoshspecParam -TestName CimObject -TestExpression $expression @PSBoundParameters
     
