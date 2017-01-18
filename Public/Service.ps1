@@ -33,6 +33,10 @@ function Service {
         [Parameter(Mandatory, Position=2, ParameterSetName='default')]
         [scriptblock]$Should
     )
+    if (-not $PSBoundParameters.ContainsKey('Property')) {
+        $Property = 'Status'
+        $PSBoundParameters.Add('Property', $Property)
+    }
 
     Switch -Exact (Get-TargetType -Target $Target) {
         'String' {
